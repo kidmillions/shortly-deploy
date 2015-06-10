@@ -94,6 +94,17 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('build', [
+    //hint
+    'jshint',
+
+    // //clean
+    // //uglify
+    // 'uglify',
+    // //concat
+    // 'concat'
+    //sent to dist
+
+    //upload
   ]);
 
   grunt.registerTask('upload', function(n) {
