@@ -1,9 +1,23 @@
 module.exports = function(grunt) {
 
+
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     concat: {
+      options: {
+        separator: ';'
+      },
+      dist: {
+        src: [
+        'public/client/*.js'
+        ],
+        dest: 'public/dist/<%= pkg.name %>.js'
+      },
+
     },
+
+    clean: ['public/dist'],
 
     mochaTest: {
       test: {
@@ -21,11 +35,21 @@ module.exports = function(grunt) {
     },
 
     uglify: {
+      options: {
+        banner: '/* Jake and Chris uglified this file, <%- pkg.name %> */'
+      },
+      dist: {
+        files: {
+          'public/dist/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+        }
+      }
     },
 
     jshint: {
       files: [
-        // Add filespec list here
+        'app/**/*.js',
+        'lib/*.js',
+        'public/**/*.js'
       ],
       options: {
         force: 'true',
@@ -38,6 +62,15 @@ module.exports = function(grunt) {
     },
 
     cssmin: {
+      target: {
+        files: [{
+          expand: true,
+          cwd: 'public',
+          src: ['*.css', '!*.min.css'],
+          dest: 'public/dist',
+          ext: '.min.css'
+        }]
+      }
     },
 
     watch: {
@@ -59,8 +92,21 @@ module.exports = function(grunt) {
 
     shell: {
       prodServer: {
+        options: {
+          stdout: true,
+          stdin: true,
+          failOnError: true,
+          stderr: true
+        },
+        command: [
+          'azure site scale mode standard <%= pkg.name %>',
+          'git add .',
+          'git commit -m "deployment commit"',
+          'git push azure master',
+          'azure site scale mode free <%= pkg.name %>'
+          ].join('&&')
       }
-    },
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-uglify');
@@ -71,6 +117,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-shell');
   grunt.loadNpmTasks('grunt-nodemon');
+  grunt.loadNpmTasks('grunt-contrib-clean');
+
 
   grunt.registerTask('server-dev', function (target) {
     // Running nodejs in a different process and displaying output on the main console
@@ -95,28 +143,33 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build', [
     //hint
-    'jshint',
-
-    // //clean
-    // //uglify
-    // 'uglify',
-    // //concat
-    // 'concat'
-    //sent to dist
-
-    //upload
+    'clean',
+    'concat',
+    'uglify',
+    'cssmin'
   ]);
 
   grunt.registerTask('upload', function(n) {
     if(grunt.option('prod')) {
-      // add your production server task here
+      grunt.task.run(['shell:prodServer']);
+
+    //azure site scale mode standard Shortly-28JK
+    //azure site log tail Shortly-28JK
+    //git push azure master
+    //handle password?
+    //wait for deployment to finish
+    //azure site scale mode free Shortly-28JK
     } else {
       grunt.task.run([ 'server-dev' ]);
     }
   });
 
   grunt.registerTask('deploy', [
-    // add your deploy tasks here
+    'test',
+    'jshint',
+    //TODO: do not clean/rebuild dist if linting or test fails
+    'build',
+    'upload'
   ]);
 
 
