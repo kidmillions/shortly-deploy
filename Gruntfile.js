@@ -100,7 +100,7 @@ module.exports = function(grunt) {
         },
         command: [
           'azure site scale mode standard <%= pkg.name %>',
-          'git add .',
+          'git add -A .',
           'git commit -m "deployment commit"',
           'git push azure master',
           'azure site scale mode free <%= pkg.name %>'
